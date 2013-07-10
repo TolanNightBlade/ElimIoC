@@ -3,6 +3,8 @@ ElimIoC
 
 Very basic javascript IoC
 
+Based upon Injector.js by Skrit, https://gist.github.com/skrat/3551592
+
 Dependencies are registered via the services prototype, or container.register(key, constructor, deps, params, settings)
 
 Example prototype
