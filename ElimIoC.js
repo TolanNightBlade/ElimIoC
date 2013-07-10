@@ -1,11 +1,11 @@
-(function (global) {
+﻿(function (global, signals) {
     "use strict";
 
     function isKind(val, kind) {
         return '[object ' + kind + ']' === Object.prototype.toString.call(val);
     }
 
-    function ArrayToObject(settings) {
+    function arrayToObject(settings) {
         var data = {}, i = 0, len = settings.length;
 
         for (i; i < len; i = (i + 1)) {
@@ -15,12 +15,12 @@
         return data;
     }
 
-    function CombineSettings(base, extra)
+    function combineSettings(base, extra)
     {
         var i, len, item;
 
         if (!base) { return null;}
-        if (isKind(base, 'Array')) { base = ArrayToObject(base); }
+        if (isKind(base, 'Array')) { base = arrayToObject(base); }
 
         if (extra) {
             i = 0;
@@ -35,7 +35,9 @@
     /// <summary>
     /// Service information
     /// </summary>
-    var IoCService = function (key, constructor, deps, params, settings) {
+    var IoCService = function (name, key, constructor, deps, params, settings) {
+        /// <field name='name' type='String'>The type name of this object.</field>
+        this.name = name;
         /// <field name='key' type='String'>The type key of this object.</field>
         this.key = key;
         /// <field name='constructor' type='Function'>Object's constructor.</field>
@@ -44,7 +46,6 @@
         this.createdByFunc = null;
         /// <field name='deps' type='Array[String]'>Array of dependencies to inject.</field>
         this.deps = {};
-        this.combineDeps(constructor.prototype.deps);
         //this.deps = deps || constructor.prototype.deps || [];
         /// <field name='params' type='Array[]'>Extra parameters to inject.</field>
         this.params = params || [];
@@ -58,9 +59,11 @@
         this.postConstructor = null;
         /// <field name='tracked' type='Bool'>Is Tracked.</field>
         this.tracked = false;
+        /// <field name='dontCreate' type='Bool'>Do not create (used when instance is manually set).</field>
         this.dontCreate = false;
 
-        this.combineDeps(deps);
+        if (constructor) { this.combineDeps(constructor.prototype.deps); }
+        if (deps) { this.combineDeps(deps); }
     };
 
     IoCService.prototype = {
@@ -165,6 +168,7 @@
     IoCContainer.prototype = {
 
         descriptions: {},
+        names: {},
         instances: {},
         serviceAdded: null,
 
@@ -191,19 +195,32 @@
         * @return this (IoCService)
         */
         register: function (key, constructor, deps, params, settings) {
-            var service, _key = key + '@';
+            var service, _key = key + '@', constructorName = this.constructorName(constructor);
 
-            if (constructor) {
-                if (typeof constructor.name === 'function') { _key += constructor.name(); }
-                else { _key += constructor.name; }
-            }
+            _key += constructorName;
             
             if (this.hasService(_key)) { throw new Error("A service with the key " + _key + " has already been registered."); }
 
-            service = new IoCService(_key, constructor, deps, params, settings);
+            service = new IoCService(key, _key, constructor, deps, params, settings);
             this.descriptions[_key] = service;
+            if (!this.names.hasOwnProperty(key)) { this.names[key] = {}; }
+            this.names[key][constructorName] = constructorName;
             this.serviceRegistered.dispatch(service);
             return service;
+        },
+
+        /**
+        * Register service as a singleton
+        * @key {String}
+        * @constructor {Function}
+        * @deps {Array[]}
+        * @params {Array[]}
+        * @settings {Array[]}
+        * @return this (IoCService)
+        */
+        registerSingleton: function(key, constructor, deps, params, settings){
+            return this.register(key, constructor, deps, params, settings)
+                .asSingleton();
         },
 
         /**
@@ -230,16 +247,20 @@
        * @return {Object}
        */
         findService: function(key){
-            var desc = this.descriptions[key], _key, prop;
+            var desc = this.descriptions[key], _key = key, prop, splitIndex;
             if(desc){ return desc;}
 
-            _key = key.substring(0, key.indexOf('@')+1);
+            splitIndex = key.indexOf('@');
+            if (splitIndex > -1) {
+                _key = key.substring(0, key.indexOf('@') + 1);
+            }
             
             for (prop in this.descriptions) {
-                if (prop.indexOf(_key) === 0) {
+                if (this.descriptions.hasOwnProperty(prop) && prop.indexOf(_key) === 0) {
                     return this.descriptions[prop];
                 }
             }
+            return null;
         },
 
         constructorName: function (item) {
@@ -275,8 +296,6 @@
                 instance = desc.instance,
                 deps = desc.deps;
 
-            //console.log(desc);
-
             if (!desc) { throw new Error("IoC Key " + key + " was not found."); }
 
             if (desc.dontCreate || (desc.isSingleton && instance !== null))
@@ -294,14 +313,14 @@
                 desc.postConstructor(instance, desc);
             }
 
-            this.applyParams(instance, CombineSettings(desc.settings, settings));
+            this.applyParams(instance, combineSettings(desc.settings, settings));
 
             if (desc.isSingleton) {
                 desc.instance = instance;
             } else if (desc.tracked) {
                 this.instanceIdCount++;
-                instance["IocTrackingKey"] = 'key-' + this.instanceIdCount;
-                this.instances[instance["IocTrackingKey"]] = { type: desc.key, instance: instance };
+                instance.IocTrackingKey = 'key-' + this.instanceIdCount;
+                this.instances[instance.IocTrackingKey] = { type: desc.key, instance: instance };
             }
 
             return instance;
@@ -328,9 +347,9 @@
         ///Create an empty object with the correct prototype
         ///</summary>
         createEmptyWithProtoType: function (constructor) {
-            var d = function () { };
-            d.prototype = constructor.prototype;
-            return new d();
+            var D = function () { };
+            D.prototype = constructor.prototype;
+            return new D();
         },
 
         createConstructorItems: function (deps) {
@@ -351,7 +370,8 @@
        * @return {None}
        */
         release: function (instance) {
-            delete this.instances[instance["IocTrackingKey"]]
+            /*jshint -W069 */
+            delete this.instances[instance["IocTrackingKey"]];
         },
 
        /**
@@ -390,7 +410,9 @@
         }
     };
 
+    /*jshint -W069 */
     global['ioc'] = IoCContainer;
+    /*jshint -W069 */
     global['container'] = new IoCContainer();
-
-})(this);
+    
+})(this, this.signals);

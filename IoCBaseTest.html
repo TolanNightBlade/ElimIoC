@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="/res/js/lib/jquery-1.10.1.min.js" type="text/javascript"></script>
+    <script src="/res/js/lib/signals.js" type="text/javascript"></script>
+    <script src="/res/js/lib/IoC/ElimIoC.js" type="text/javascript"></script>
+</head>
+<body>
+    <div id="servicesCount" style="margin:10px;border:1px solid gray;padding:2px;"></div>
+    <div id="testArea">
+
+    </div>
+    <script>
+
+        if (Function.prototype.name === undefined) {
+            Function.prototype.name = function () {
+                "use strict";
+                var funcNameRegex = /function\s([^(]{1,})\(/;
+                var results = (funcNameRegex).exec((this).toString());
+                return (results && results.length > 1) ? results[1] : "";
+            };
+        }
+
+        if (!Function.prototype.bind) {
+            Function.prototype.bind = function () {
+                "use strict";
+                var fn = this, args = Array.prototype.slice.call(arguments), object = args.shift();
+                return function () {
+                    return fn.apply(object, args.concat(Array.prototype.slice.call(arguments)));
+                };
+            };
+        }
+
+        if (!Array.prototype.forEach) {
+            Array.prototype.forEach = function (fun /*, thisp*/) {
+                var len = this.length;
+                if (typeof fun != "function")
+                    throw new TypeError();
+
+                var thisp = arguments[1];
+                for (var i = 0; i < len; i++) {
+                    if (i in this)
+                        fun.call(thisp, this[i], i, this);
+                }
+            };
+        }
+
+        if (Function.prototype.bind && window.console && typeof console.log == "object") {
+            [
+              "log", "info", "warn", "error", "assert", "dir", "clear", "profile", "profileEnd"
+            ].forEach(function (method) {
+                console[method] = this.bind(console[method], console);
+            }, Function.prototype.call);
+        }
+
+        var repoSettings = {
+            x: "1"
+        };
+        var repoSettingsAlt = {
+            x: "1"
+        };
+
+        function loggerOne() {
+            console.log('CTor: loggerOne (Called)');
+            this.l = Function.prototype.bind.call(console.log, console);
+        };
+
+        loggerOne.prototype = {
+            log: function (msg) {
+                this.l.apply(console, arguments);
+            }
+        };
+
+        function repoOne(logger, settings) {
+            console.log('CTor repoOne called.');
+            this.logger = logger;
+            this.settings = settings;
+            this.name = "repoOne";
+        };
+
+        repoOne.prototype = {
+            deps: ['logger', 'repoSettings'],
+            moo: function () {
+                $('#testArea').html("moo worked");
+                this.logger.log('repoOne>Moo called');
+            }
+        };
+
+        function repoTwo(logger, settings) {
+            console.log('CTor repoTwo called.');
+            this.logger = logger;
+            this.settings = settings;
+            this.name = "repoTwo";
+        };
+
+        repoTwo.prototype = {
+            deps: ['logger', 'repoSettings'],
+            moo: function () {
+                $('#testArea').html("Repo Two! moo worked");
+                this.logger.log('repoTwo>Moo called');
+            }
+        };
+
+        function ControllerOne(_repo, _logger, options) {
+            this.X = "a";
+            this.repo = _repo;
+            this.logger = _logger;
+            this.options = options;
+            this.name = "";
+            console.log('CTor: ControllerOne (Called)');
+        };
+
+        ControllerOne.prototype = {
+            deps: [{ name: "testRepository", value: "repoOne" }, "logger"],
+            test: function () {
+                this.logger.log('ControllerOne>test called', this.someValue);
+                this.repo.moo();
+
+                $('#testArea').html($('#testArea').html() + '<br/>' + this.name + ' / ' + this.someValue);
+            },
+            someSetterFunction: function (name) {
+                this.name = name;
+            },
+            someValue: 0
+        };
+
+        container.serviceRegistered.add(function (item) {
+            //console.log('@serviceRegistered', item);
+        });
+
+        container.register("repoSettings")
+            .withInstance(repoSettings);
+
+        container.register("logger", loggerOne, null)
+            .asSingleton()
+            .withPostConstructor(function () {
+               // console.log('@@Logger post constructor called');
+            });
+        container.register("testRepository", repoOne, null)
+            .asSingleton();
+        container.register("testRepository", repoTwo, null);
+        try{
+            container.register("testRepository", repoOne, null);
+        } catch (e) {
+            console.log('container.register Error', e);
+        }
+        container.register("ControllerOne", this["ControllerOne"], [{ name: "testRepository", value: "repoTwo" }, "logger"], [{ name: "moo", value: "value" }])
+            .withSettings([{ name: "someSetterFunction", value: "this is a name" }, { name: "someValue", value:99 }]);
+
+        var instance = container.resolveWithSettings("ControllerOne", [{ name: "someValue", value: 42 }]);
+        var logger = container.resolve("logger");
+        var repo = container.resolve("testRepository");
+        var repo2 = container.resolve("testRepository");
+
+        logger.log('Logger Created');
+
+        console.log('instance', instance);
+        console.log('repo', repo, repo.name, repo2.name);
+
+        //repo.moo();
+        instance.test();
+
+        $(document).ready(function () {
+            var servicesHtml = 'Services count: ' + container.serviceCount();
+            servicesHtml += '<br/>Singleton count: ' + container.singletonCount();
+            $('#servicesCount').html(servicesHtml);
+        });
+    </script>
+</body>
+</html>

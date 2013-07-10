@@ -59,7 +59,7 @@
             x: "1"
         };
         var repoSettingsAlt = {
-            x: "1"
+            x: "2"
         };
 
         function loggerOne() {
@@ -236,6 +236,7 @@
 
             equal(item.name, "this is a name", "Check injected property (name: 'this is a name')");
             equal(item.repo.name, "repoTwo", "Check injected item (repositry: repoTwo)");
+            equal(item.repo.logger.name, "loggerOne", "Check sub injected item (repositry: repoTwo(Logger))");
             equal(item.logger.name, "loggerOne", "Check injected item (logger: loggerOne)");
             equal(typeof item.logger.log, "function", "Check injected item has function (logger: loggerOne)");
             equal(item.someValue, 99, "Resolve ControllerOne - property: someValue = 99");
@@ -246,6 +247,7 @@
 
             equal(item.name, "alt name", "Check injected property (name: 'alt name')");
             equal(item.repo.name, "repoTwo", "Check injected item (repositry: repoTwo)");
+            equal(item.repo.logger.name, "loggerOne", "Check sub injected item (repositry: repoTwo(Logger))");
             equal(item.logger.name, "loggerOne", "Check injected item (logger: loggerOne)");
             equal(typeof item.logger.log, "function", "Check injected item has function (logger: loggerOne)");
             equal(item.someValue, 42, "Resolve ControllerOne - property: someValue = 42");
@@ -256,6 +258,7 @@
 
             equal(item.name, "this is a name", "Check injected property (name: 'this is a name')");
             equal(item.repo.name, "repoTwo", "Check injected item (repositry: repoTwo)");
+            equal(item.repo.logger.name, "loggerOne", "Check sub injected item (repositry: repoTwo(Logger))");
             equal(item.logger.name, "loggerOne", "Check injected item (logger: loggerOne)");
             equal(typeof item.logger.log, "function", "Check injected item has function (logger: loggerOne)");
             equal(item.someValue, 99, "Resolve ControllerOne - property: someValue = 99");
