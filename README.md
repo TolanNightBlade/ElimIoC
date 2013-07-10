@@ -1,0 +1,4 @@
+ElimIoC
+=======
+
+Basic javascript IoC
