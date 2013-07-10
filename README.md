@@ -1,7 +1,7 @@
 ElimIoC
 -------
 
-Basic javascript IoC
+ElimIoC is a basic lightweight dependency injection class, which supports singletons and property injection.
 
 Based upon Injector.js by Skrit, https://gist.github.com/skrat/3551592
 
@@ -9,7 +9,7 @@ QUnit tests included in IoCBaseQunit.html
 
 Usage
 
-var myContainer = new IoCContainer(); or the global “container”
+var myContainer = new IoCContainer(); or use the global container.
 
 Classes
 -------
@@ -53,7 +53,31 @@ IoCContainer properties
 
 Dependencies are registered via the services prototype, or container.register(key, constructor, deps, params, settings)
 
-Example prototype
+Example dependency chain
+
+	Controller
+		- View
+		- Repository
+			- Logger
+			- Settings
+		- Logger
+
+	ControllerOne(view, repository, logger);
+	RepositoryOne(logger, settings);
+	RepositoryTwo(logger, settings);
+	
+	This could be registered as (assuming the depencies are declared on the prototype, if not, then you can pass the depencies into the register method)
+	
+	container.register("logger")
+		.asSingleton();
+	container.register("Repository", RepositoryOne)
+		.asSingleton();
+	container.register("ControllerOne");
+		
+	Then just call "container.resolve("ControllerOne");" to create a new instance of "Controller" with the singletones repository and logger.
+		
+
+Example: Declare dependenices on the prototype
 
 	///ControllerOne - has 2 dependencies repoOne and logger
 	ControllerOne.prototype = { deps: ["repoOne", "logger"] }
@@ -61,7 +85,7 @@ Example prototype
 	///ControllerOne - has 2 dependencies testRepository of type repoOne and logger
 	ControllerOne.prototype =deps: [{ name: "testRepository", value: "repoOne" }, "logger"],
 
-Example register
+Example: Register a service in a container
 
 	container.register("ControllerOne")
 		.asSingleton()
