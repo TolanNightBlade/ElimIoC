@@ -1,4 +1,5 @@
 (function (global) {
+    "use strict";
 
     var IoCService = function (key, constructor, params, settings) {
         this.key = key;
@@ -57,21 +58,27 @@
         serviceAdded: null,
 
         registerInstance: function (key, instance) {
-            var service = new IoCService(key, null, null);
+            var service;
+            if (this.hasService(key)) { throw new Error("A service with the key " + key + " has already been registered."); }
+            service = new IoCService(key, null, null);
             service.isSingleton = true;
             service.instance = instance;
             this.descriptions[key] = service;
+
             return service;
         },
 
         register: function (key, constructor, params, settings) {
-            var service = new IoCService(key, constructor, params, settings);
+            var service;
+            if (this.hasService(key)) { throw new Error("A service with the key " + key + " has already been registered."); }
+
+            service = new IoCService(key, constructor, params, settings);
             this.descriptions[key] = service;
             this.serviceRegistered.dispatch(service);
             return service;
         },
 
-        create: function (key) {
+        resolve: function (key) {
             var desc = this.descriptions[key],
                 instance = desc.instance,
                 deps = desc.constructor.prototype.deps || [];
@@ -141,7 +148,7 @@
 
                 console.log(deps[i], itm);
 
-                arrayItems.push(this.create(deps[i]));
+                arrayItems.push(this.resolve(deps[i]));
             }
 
             return arrayItems;
@@ -149,6 +156,28 @@
 
         release: function (instance) {
             delete this.instances[instance["IocTrackingKey"]]
+        },
+
+        hasService: function (key) {
+            return this.descriptions.hasOwnProperty(key);
+        },
+
+        serviceCount: function () {
+            var i = 0, prop;
+            for (prop in this.descriptions) {
+                if (this.descriptions.hasOwnProperty(prop)) { i++; }
+            }
+            return i;
+        },
+
+        singletonCount: function () {
+            var i = 0, prop;
+            for (prop in this.descriptions) {
+                if (this.descriptions.hasOwnProperty(prop)) {
+                    if (this.descriptions[prop].isSingleton) { i++; }
+                }
+            }
+            return i;
         }
     };
 
