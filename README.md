@@ -61,13 +61,18 @@ Example dependency chain
 			- Logger
 			- Settings
 		- Logger
-
+	
+	var DefaultRepositorySettings = {
+		urlOfService: 'http://xxx.bob/xxxx'
+	};
 	ControllerOne(view, repository, logger);
 	RepositoryOne(logger, settings);
 	RepositoryTwo(logger, settings);
 	
 	This could be registered as (assuming the depencies are declared on the prototype, if not, then you can pass the depencies into the register method)
 	
+	container.register("repositorySettings")
+                .withInstance(DefaultRepositorySettings);
 	container.register("logger")
 		.asSingleton();
 	container.register("Repository", RepositoryOne)
@@ -80,13 +85,17 @@ Example dependency chain
 Example: Declare dependenices on the prototype
 
 	///ControllerOne - has 2 dependencies repoOne and logger
-	ControllerOne.prototype = { deps: ["repoOne", "logger"] }
+	ControllerOne.prototype = { 
+		deps: ["repoOne", "logger"] 
+	}
 	
 	///ControllerOne - has 2 dependencies testRepository of type repoOne and logger
-	ControllerOne.prototype =deps: [{ name: "testRepository", value: "repoOne" }, "logger"],
+	ControllerOne.prototype = {
+		deps: [{ name: "testRepository", value: "repoOne" }, "logger"]
+	}
 
-Example: Register a service in a container
+Example: Register a service
 
 	container.register("ControllerOne")
 		.asSingleton()
-		.withSettings([{ name: "someSetterFunction", value: "setname" }, { name: "someValue", value:99 }]);
+		.withSettings([{ name: "someSetterFunction", value: "this string will be set" }, { name: "someValue", value:99 }]);
