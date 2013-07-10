@@ -1,5 +1,4 @@
 ElimIoC
-=======
 
 Very basic javascript IoC
 
@@ -9,13 +8,16 @@ Usage
 
 var myContainer = new IoCContainer(); or the global “container”
 
-registerInstance:(key, instance)
-register(key, constructor, deps, params, settings)
-resolve (key)
-release (instance)
-hasService (key)
-serviceCount () 
-singletonCount () 
+IoCContainer methods
+-------
+
+  registerInstance:(key, instance)
+	register(key, constructor, deps, params, settings)
+	resolve (key)
+	release (instance)
+	hasService (key)
+	serviceCount () 
+	singletonCount () 
 
 Dependencies are registered via the services prototype, or container.register(key, constructor, deps, params, settings)
 
