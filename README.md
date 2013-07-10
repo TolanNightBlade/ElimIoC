@@ -17,6 +17,17 @@ Classes
 	IoCContainer - main container class
 	IoCService - service item description
 	
+IoCService methods
+-------
+
+	asSingleton(instance) - returns current instance of IoCService
+	asTracked() --
+	withInstance(instance) -- use an existing instance of an object, opposed to creating a new one (marks as singleton)
+	withDependencies(value) -- modifiy the objects dependencies
+	withPostConstructor(value) -- function to run after constructor has been called
+	withParameters(value) -- extra parameters to be passed into constructor
+	withSettings(value) -- settings to be applied after object is created
+	createdBy(value) -- use alternate function to create object
 
 IoCContainer methods
 -------
@@ -30,7 +41,6 @@ IoCContainer methods
 	hasService (key)
 	serviceCount () 
 	singletonCount ()
-	
 	findService(key)
 	
 IoCContainer properties
@@ -45,7 +55,14 @@ Dependencies are registered via the services prototype, or container.register(ke
 
 Example prototype
 
-ControllerOne.prototype = { deps: ["repoOne", "logger"] }
+	///ControllerOne - has 2 dependencies repoOne and logger
+	ControllerOne.prototype = { deps: ["repoOne", "logger"] }
+	
+	///ControllerOne - has 2 dependencies testRepository of type repoOne and logger
+	ControllerOne.prototype =deps: [{ name: "testRepository", value: "repoOne" }, "logger"],
+
 Example register
 
-container.register("ControllerOne", ControllerOne, ["repoOne", "logger"], [{ name: "moo", value: "value" }]) .withSettings([{ name: "someSetterFunction", value: "setname" }, { name: "someValue", value:99 }]);
+	container.register("ControllerOne")
+		.asSingleton()
+		.withSettings([{ name: "someSetterFunction", value: "setname" }, { name: "someValue", value:99 }]);
