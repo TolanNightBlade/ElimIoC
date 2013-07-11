@@ -1,7 +1,7 @@
 ElimIoC
 -------
 
-ElimIoC is a basic lightweight dependency injection class, which supports singletons and property injection.
+ElimIoC is a basic lightweight dependency injection class which supports singletons and property injection.
 
 Based upon Injector.js by Skrit, https://gist.github.com/skrat/3551592
 
@@ -23,7 +23,7 @@ IoCService methods
 	asSingleton(instance) - returns current instance of IoCService
 	asTracked() --
 	withInstance(instance) -- use an existing instance of an object, opposed to creating a new one (marks as singleton)
-	withDependencies(value) -- modifiy the objects dependencies
+	withDependencies(value) -- modify the objects dependencies
 	withPostConstructor(value) -- function to run after constructor has been called
 	withParameters(value) -- extra parameters to be passed into constructor
 	withSettings(value) -- settings to be applied after object is created
@@ -69,7 +69,7 @@ Example dependency chain
 	RepositoryOne(logger, settings);
 	RepositoryTwo(logger, settings);
 	
-	This could be registered as (assuming the depencies are declared on the prototype, if not, then you can pass the depencies into the register method)
+	This could be registered as (assuming the dependencies are declared on the prototype, if not, then you can pass the dependencies into the register method)
 	
 	container.register("repositorySettings")
                 .withInstance(DefaultRepositorySettings);
@@ -79,10 +79,10 @@ Example dependency chain
 		.asSingleton();
 	container.register("ControllerOne");
 		
-	Then just call "container.resolve("ControllerOne");" to create a new instance of "Controller" with the singletones repository and logger.
+	Then just call "container.resolve("ControllerOne");" to create a new instance of "Controller" with the singletons repository and logger.
 		
 
-Example: Declare dependenices on the prototype
+Example: Declare dependencies on the prototype
 
 	///ControllerOne - has 2 dependencies repoOne and logger
 	ControllerOne.prototype = { 
